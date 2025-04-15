@@ -1,6 +1,6 @@
 ﻿// =============================================================================
 // ABMZ_ElementPlus.js
-// Version: 1.00
+// Version: 1.01
 // -----------------------------------------------------------------------------
 // [Homepage]: ヱビのノート
 //             http://www.zf.em-net.ne.jp/~ebi-games/
@@ -10,7 +10,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.00　属性威力の増加の関数を呼び出せるようにします。
+ * @plugindesc v1.01　属性威力の増加の関数を呼び出せるようにします。
  * @author ヱビ
  * @url http://www.zf.em-net.ne.jp/~ebi-games/
  * 
@@ -33,6 +33,9 @@
  *   炎・光のポイントの合計を返します。
  * 
  * ============================================================================
+ * 
+ * Version 1.01
+ *   アクターにタグがないときに威力がおかしくなってしまう不具合を修正
  * 
  * Version 1.00
  *   公開
@@ -167,10 +170,10 @@ Window_Base.prototype.drawCurrentAndMax = function(current, max, x, y,
 			return 0;
 		}
 		elements = c.meta["EPlus"].split(",");
-		for (let j = 0; j < elements.length; j += 2) {
-			for (let k = 0; k < elementsArr.length; k++) {
-				if (elements[j] == elementsArr[k]) {
-					value += Math.floor(Number(eval(elements[j + 1])));
+		for (let i = 0; i < elements.length; i += 2) {
+			for (let j = 0; j < elementsArr.length; j++) {
+				if (elements[i] == elementsArr[j]) {
+					value += Math.floor(Number(eval(elements[i + 1])));
 				}
 			}
 		}
@@ -179,16 +182,14 @@ Window_Base.prototype.drawCurrentAndMax = function(current, max, x, y,
 		return value;
 
 	}
-	Game_Actor.prototype.EPlus = function(elementsArr) {
-		//if (!this.actor().meta["EPlus"]) {
-		//	return 0;
-		//}
+	Game_Actor.prototype.EPlusActor = function(elementsArr) {
+		if (!this.actor().meta["EPlus"]) {
+			return 0;
+		}
 		const a = this;
 		const level = this.level;
 		let value = 0;
 		let elements = this.actor().meta["EPlus"].split(",");
-		value += this.EPlusEquip(elementsArr);
-		value += this.EPlusClass(elementsArr);
 		for (let i = 0; i < elements.length;  i += 2) {
 			for (let j = 0; j < elementsArr.length; j++) {
 				if (elements[i] == elementsArr[j]) {
@@ -199,18 +200,27 @@ Window_Base.prototype.drawCurrentAndMax = function(current, max, x, y,
 		}
 		return value;
 	}
+	Game_Actor.prototype.EPlus = function(elementsArr) {
+		const a = this;
+		const level = this.level;
+		let value = 0;
+		value += this.EPlusActor(elementsArr);
+		value += this.EPlusEquip(elementsArr);
+		value += this.EPlusClass(elementsArr);
+		return value;
+	}
 	/* 敵キャラのメモ <EPlus:光,level> */
-	Game_Enemy.prototype.EPlus = function(element) {
+	Game_Enemy.prototype.EPlus = function(elementsArr) {
 		if (!this.enemy().meta["EPlus"]) {
 			return 0;
 		}
-		let level = eval(this.enemy().meta.bookLevel);
+		let level = Number(eval(this.enemy().meta.bookLevel));
 		if (!this.enemy().meta.bookLevel) {
 			level = this.atk;
 		}
 		const a = this;
 		let value = 0;
-		let elements = this.meta["EPlus"].split(",");
+		let elements = this.enemy().meta["EPlus"].split(",");
 		for (let i = 0; i < elements.length;  i += 2) {
 			for (let j = 0; j < arguments.length; j++) {
 				if (elements[i] == arguments[j]) {
